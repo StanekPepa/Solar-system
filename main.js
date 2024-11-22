@@ -14,7 +14,15 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 const textureLoader = new TextureLoader();
-// pause
+
+// Handle window resize
+window.addEventListener("resize", () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+// Pause
 let isPaused = false;
 document.addEventListener("keydown", (event) => {
   if (event.key === "p" || event.key === "P") {
@@ -29,7 +37,6 @@ function createStars() {
 
   for (let i = 0; i < starsCount; i++) {
     const i3 = i * 3;
-    // Create stars in a sphere around the scene
     const radius = 400;
     const theta = Math.random() * Math.PI * 2;
     const phi = Math.acos(2 * Math.random() - 1);
@@ -58,10 +65,27 @@ createStars();
 
 // Add OrbitControls
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.enablePan = false;
-controls.mouseButtons = {
-  MIDDLE: THREE.MOUSE.ROTATE,
+controls.enablePan = true;
+controls.enableZoom = true;
+controls.enableRotate = true;
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+
+// Configure touch and mouse buttons
+controls.touches = {
+  ONE: THREE.TOUCH.ROTATE,
+  TWO: THREE.TOUCH.DOLLY_PAN,
 };
+controls.mouseButtons = {
+  LEFT: THREE.MOUSE.ROTATE,
+  MIDDLE: THREE.MOUSE.DOLLY,
+  RIGHT: THREE.MOUSE.PAN,
+};
+
+// Control limits
+controls.minDistance = 20;
+controls.maxDistance = 300;
+controls.maxPolarAngle = Math.PI / 1.5;
 
 // Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff);
@@ -69,7 +93,7 @@ const pointLight = new THREE.PointLight(0xffffff, 2, 300);
 scene.add(ambientLight);
 scene.add(pointLight);
 
-// Create orbit line
+// Orbit line
 function createOrbitLine(radius) {
   const points = [];
   const segments = 64;
@@ -80,7 +104,7 @@ function createOrbitLine(radius) {
     );
   }
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  const material = new THREE.LineBasicMaterial({ color: 0x9a9a9a });
+  const material = new THREE.LineBasicMaterial({ color: 0x454545 });
   const line = new THREE.LineLoop(geometry, material);
   scene.add(line);
 }
@@ -97,7 +121,7 @@ const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 
 // Planet creation function
-function createPlanet(size, textureImage, distance) {
+function createPlanet(size, textureImage, distance, hasRings = false) {
   const texture = textureLoader.load(`textures/${textureImage}`);
   const planet = new THREE.Mesh(
     new THREE.SphereGeometry(size, 32, 32),
@@ -107,6 +131,35 @@ function createPlanet(size, textureImage, distance) {
       roughness: 1,
     })
   );
+
+  if (hasRings) {
+    const innerRadius = size * 2;
+    const outerRadius = size * 4;
+    const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
+
+    const ringTexture = textureLoader.load("textures/saturn-ring.png");
+
+    const ringMaterial = new THREE.MeshStandardMaterial({
+      map: ringTexture,
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+      metalness: 0.3,
+      roughness: 0.4,
+      emissive: 0x222222,
+      emissiveIntensity: 0.2,
+    });
+
+    const rings = new THREE.Mesh(ringGeometry, ringMaterial);
+
+    rings.rotation.x = Math.PI / 2;
+    const ringsLight = new THREE.PointLight(0xffffff, 1.5);
+    ringsLight.position.set(0, 10, 0);
+    planet.add(ringsLight);
+
+    planet.add(rings);
+  }
+
   const orbit = new THREE.Object3D();
   orbit.add(planet);
   planet.position.x = distance;
@@ -121,20 +174,21 @@ const venus = createPlanet(0.9, "venus.jpg", 15);
 const earth = createPlanet(1, "earth.jpg", 20);
 const mars = createPlanet(0.6, "mars.jpg", 25);
 const jupiter = createPlanet(2.5, "jupiter.jpg", 35);
-const saturn = createPlanet(2, "saturn.jpg", 45);
+const saturn = createPlanet(2, "saturn.jpg", 45, true);
 const uranus = createPlanet(1.5, "uranus.jpg", 55);
 const neptune = createPlanet(1.5, "neptune.jpg", 65);
 
-// Camera position for top-down view
-camera.position.y = 175;
-camera.position.z = 0;
-camera.rotation.x = Math.PI / 2;
+// Camera position
+camera.position.set(100, 100, 100);
+camera.lookAt(scene.position);
+
+// Adjust Saturn's tilt
+saturn.planet.rotation.z = Math.PI / 8;
 
 // Animation
 function animate() {
   requestAnimationFrame(animate);
   if (!isPaused) {
-    // Update controls
     controls.update();
 
     // Rotate planets around sun
