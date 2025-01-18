@@ -1,8 +1,8 @@
-import * as THREE from "/node_modules/three/build/three.module.js";
-import { OrbitControls } from "/node_modules/three/examples/jsm/controls/OrbitControls.js";
-import { TextureLoader } from "/node_modules/three/build/three.module.js";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { TextureLoader } from "three";
 
-// Vytvoreni sceny
+// Scene setup
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
   45,
@@ -10,34 +10,40 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   1000
 );
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.physicallyCorrectLights = true;
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1;
 document.body.appendChild(renderer.domElement);
 const textureLoader = new TextureLoader();
+
+// Resize handler
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// pozice kamery
+// Camera position
 camera.position.set(100, 100, 100);
 camera.lookAt(scene.position);
 
-// svetlo
-const ambientLight = new THREE.AmbientLight(0xffffff);
+// Enhanced lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 const pointLight = new THREE.PointLight(0xffffff, 2, 300);
+pointLight.position.set(0, 0, 0);
 scene.add(ambientLight);
 scene.add(pointLight);
 
-// OrbitControls
+// OrbitControls setup
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = true;
 controls.enableZoom = true;
 controls.enableRotate = true;
 controls.enableDamping = true;
 controls.dampingFactor = 0.05;
-
 controls.touches = {
   ONE: THREE.TOUCH.ROTATE,
   TWO: THREE.TOUCH.DOLLY_PAN,
@@ -47,31 +53,30 @@ controls.mouseButtons = {
   MIDDLE: THREE.MOUSE.DOLLY,
   RIGHT: THREE.MOUSE.PAN,
 };
-
 controls.minDistance = 20;
 controls.maxDistance = 300;
 controls.maxPolarAngle = Math.PI / 1.5;
 
-// Slunce
+// Sun
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
 const sunTexture = textureLoader.load("textures/sun.jpg");
 const sunMaterial = new THREE.MeshBasicMaterial({
   map: sunTexture,
   emissive: 0xffff00,
-  emissiveIntensity: 0.5,
+  emissiveIntensity: 1,
 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 
-// Funkce k tvorbe planet
+// Planet creation function
 function createPlanet(size, textureImage, distance, hasRings = false) {
   const texture = textureLoader.load(`textures/${textureImage}`);
   const planet = new THREE.Mesh(
     new THREE.SphereGeometry(size, 32, 32),
     new THREE.MeshStandardMaterial({
       map: texture,
-      metalness: 0,
-      roughness: 1,
+      metalness: 0.1,
+      roughness: 0.8,
     })
   );
 
@@ -79,9 +84,7 @@ function createPlanet(size, textureImage, distance, hasRings = false) {
     const innerRadius = size * 2;
     const outerRadius = size * 4;
     const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
-
     const ringTexture = textureLoader.load("textures/saturn-ring.png");
-
     const ringMaterial = new THREE.MeshStandardMaterial({
       map: ringTexture,
       side: THREE.DoubleSide,
@@ -90,16 +93,13 @@ function createPlanet(size, textureImage, distance, hasRings = false) {
       metalness: 0.3,
       roughness: 0.4,
       emissive: 0x222222,
-      emissiveIntensity: 0.2,
+      emissiveIntensity: 0.4,
     });
-
     const rings = new THREE.Mesh(ringGeometry, ringMaterial);
-
     rings.rotation.x = Math.PI / 2;
     const ringsLight = new THREE.PointLight(0xffffff, 1.5);
     ringsLight.position.set(0, 10, 0);
     planet.add(ringsLight);
-
     planet.add(rings);
   }
 
@@ -111,7 +111,7 @@ function createPlanet(size, textureImage, distance, hasRings = false) {
   return { planet, orbit };
 }
 
-// Obezne drahy (linky)
+// Orbit lines
 function createOrbitLine(radius) {
   const points = [];
   const segments = 128;
@@ -127,7 +127,7 @@ function createOrbitLine(radius) {
   scene.add(line);
 }
 
-// Tvorba planet
+// Create planets
 const mercury = createPlanet(0.4, "mercury.jpg", 10);
 const venus = createPlanet(0.9, "venus.jpg", 15);
 const earth = createPlanet(1, "earth.jpg", 20);
@@ -137,10 +137,10 @@ const saturn = createPlanet(2, "saturn.jpg", 45, true);
 const uranus = createPlanet(1.5, "uranus.jpg", 55);
 const neptune = createPlanet(1.5, "neptune.jpg", 65);
 
-// Nakloneni saturnu
+// Saturn tilt
 saturn.planet.rotation.z = Math.PI / 8;
 
-// Pozadi (hvezdy)
+// Stars background
 function createStars() {
   const starsGeometry = new THREE.BufferGeometry();
   const starsCount = 2000;
@@ -161,20 +161,18 @@ function createStars() {
     "position",
     new THREE.Float32BufferAttribute(positions, 3)
   );
-
   const starsMaterial = new THREE.PointsMaterial({
     color: 0xffffff,
-    size: 0.5,
+    size: 0.75,
     sizeAttenuation: true,
   });
-
   const stars = new THREE.Points(starsGeometry, starsMaterial);
   scene.add(stars);
 }
 
 createStars();
 
-// Pauza
+// Pause functionality
 let isPaused = false;
 document.addEventListener("keydown", (event) => {
   if (event.key === "p" || event.key === "P") {
@@ -182,13 +180,13 @@ document.addEventListener("keydown", (event) => {
   }
 });
 
-// Animace
+// Animation loop
 function animate() {
   requestAnimationFrame(animate);
   if (!isPaused) {
     controls.update();
 
-    // Rotace planet kolem slunce
+    // Orbit rotation
     mercury.orbit.rotation.y += 0.02;
     venus.orbit.rotation.y += 0.015;
     earth.orbit.rotation.y += 0.01;
@@ -198,7 +196,7 @@ function animate() {
     uranus.orbit.rotation.y += 0.001;
     neptune.orbit.rotation.y += 0.0005;
 
-    // Rotace planet kolem sve osy
+    // Axis rotation
     mercury.planet.rotation.y += 0.02;
     venus.planet.rotation.y += 0.015;
     earth.planet.rotation.y += 0.01;
