@@ -59,7 +59,7 @@ controls.maxPolarAngle = Math.PI / 1.5;
 
 // Sun
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
-const sunTexture = textureLoader.load("textures/sun.jpg");
+const sunTexture = textureLoader.load("/textures/sun.jpg");
 const sunMaterial = new THREE.MeshStandardMaterial({
   map: sunTexture,
   emissive: 0xffff00,
@@ -72,7 +72,7 @@ scene.add(sun);
 
 // Planet creation function
 function createPlanet(size, textureImage, distance, hasRings = false) {
-  const texture = textureLoader.load(`textures/${textureImage}`);
+  const texture = textureLoader.load(`/textures/${textureImage}`);
   const planet = new THREE.Mesh(
     new THREE.SphereGeometry(size, 32, 32),
     new THREE.MeshStandardMaterial({
@@ -86,7 +86,7 @@ function createPlanet(size, textureImage, distance, hasRings = false) {
     const innerRadius = size * 2;
     const outerRadius = size * 4;
     const ringGeometry = new THREE.RingGeometry(innerRadius, outerRadius, 128);
-    const ringTexture = textureLoader.load("textures/saturn-ring.png");
+    const ringTexture = textureLoader.load("/textures/saturn-ring.png");
     const ringMaterial = new THREE.MeshStandardMaterial({
       map: ringTexture,
       side: THREE.DoubleSide,
