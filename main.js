@@ -13,7 +13,7 @@ const camera = new THREE.PerspectiveCamera(
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.physicallyCorrectLights = true;
-renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1;
 document.body.appendChild(renderer.domElement);
@@ -31,8 +31,8 @@ camera.position.set(100, 100, 100);
 camera.lookAt(scene.position);
 
 // Enhanced lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-const pointLight = new THREE.PointLight(0xffffff, 2, 300);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+const pointLight = new THREE.PointLight(0xffffff, 3, 300);
 pointLight.position.set(0, 0, 0);
 scene.add(ambientLight);
 scene.add(pointLight);
@@ -60,10 +60,12 @@ controls.maxPolarAngle = Math.PI / 1.5;
 // Sun
 const sunGeometry = new THREE.SphereGeometry(5, 32, 32);
 const sunTexture = textureLoader.load("textures/sun.jpg");
-const sunMaterial = new THREE.MeshBasicMaterial({
+const sunMaterial = new THREE.MeshStandardMaterial({
   map: sunTexture,
   emissive: 0xffff00,
   emissiveIntensity: 1,
+  metalness: 0,
+  roughness: 1,
 });
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
