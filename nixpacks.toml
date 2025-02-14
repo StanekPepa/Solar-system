@@ -1,0 +1,42 @@
+[phases.setup]
+aptPkgs = ["nodejs", "npm"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run preview"
+port = 3002
+
+[container]
+labels = [
+    "traefik.enable=true",
+    "traefik.http.middlewares.gzip.compress=true",
+    "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https",
+    "traefik.http.routers.http-0-pk04kg8gswcgo8ggck880488.entryPoints=http",
+    "traefik.http.routers.http-0-pk04kg8gswcgo8ggck880488.middlewares=redirect-to-https",
+    "traefik.http.routers.http-0-pk04kg8gswcgo8ggck880488.rule=Host(`simulation.stanekj.com`) && PathPrefix(`/`)",
+    "traefik.http.routers.http-0-pk04kg8gswcgo8ggck880488.service=http-0-pk04kg8gswcgo8ggck880488",
+    "traefik.http.routers.https-0-pk04kg8gswcgo8ggck880488.entryPoints=https",
+    "traefik.http.routers.https-0-pk04kg8gswcgo8ggck880488.middlewares=gzip",
+    "traefik.http.routers.https-0-pk04kg8gswcgo8ggck880488.rule=Host(`simulation.stanekj.com`) && PathPrefix(`/`)",
+    "traefik.http.routers.https-0-pk04kg8gswcgo8ggck880488.service=https-0-pk04kg8gswcgo8ggck880488",
+    "traefik.http.routers.https-0-pk04kg8gswcgo8ggck880488.tls.certresolver=letsencrypt",
+    "traefik.http.routers.https-0-pk04kg8gswcgo8ggck880488.tls=true",
+    "traefik.http.services.http-0-pk04kg8gswcgo8ggck880488.loadbalancer.server.port=3002",
+    "traefik.http.services.https-0-pk04kg8gswcgo8ggck880488.loadbalancer.server.port=3002",
+    "caddy_0.encode=zstd gzip",
+    "caddy_0.handle_path.0_reverse_proxy={{upstreams 3002}}",
+    "caddy_0.handle_path=/*",
+    "caddy_0.header=-Server",
+    "caddy_0.try_files={path} /index.html /index.php",
+    "caddy_0=https://simulation.stanekj.com",
+    "caddy_ingress_network=coolify"
+]
+
+[container.env]
+PORT = "3002"
+NODE_ENV = "production"
