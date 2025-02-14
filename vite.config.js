@@ -33,9 +33,12 @@ export default {
   server: {
     host: true,
     port: 3002,
+    cors: true,
   },
   preview: {
     host: true,
     port: 3002,
+    cors: true,
+    allowedHosts: ["simulation.stanekj.com", "localhost", "127.0.0.1"],
   },
 };
